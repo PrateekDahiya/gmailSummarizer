@@ -82,7 +82,7 @@ router.get('/', async (req, res) => {
       }
     }
 
-    const [countResult] = await db.query(
+    const countResult = await db.query(
       `SELECT COUNT(*) as total FROM emails e 
        LEFT JOIN email_analysis ea ON e.id = ea.email_id 
        ${whereClause}`,
@@ -90,7 +90,7 @@ router.get('/', async (req, res) => {
     );
     const total = countResult[0].total;
 
-    const [emails] = await db.query(
+    const emails = await db.query(
       `SELECT e.id, e.gmail_message_id, e.sender_email, e.sender_name, 
               e.subject, e.snippet, e.received_at, e.is_processed,
               ea.category, ea.importance_score, ea.summary, ea.action_required
@@ -119,7 +119,7 @@ router.get('/:id', async (req, res) => {
     const userId = req.user.id;
     const emailId = req.params.id;
 
-    const [emails] = await db.query(
+    const emails = await db.query(
       'SELECT * FROM emails WHERE id = ? AND user_id = ?',
       [emailId, userId]
     );
@@ -130,7 +130,7 @@ router.get('/:id', async (req, res) => {
 
     const email = emails[0];
 
-    const [analysis] = await db.query(
+    const analysis = await db.query(
       'SELECT * FROM email_analysis WHERE email_id = ?',
       [emailId]
     );
@@ -159,7 +159,7 @@ router.post('/sync', async (req, res) => {
     }
 
     const account = accounts[0];
-    console.log('[Sync] Found account:', account.email, 'refresh_token exists:', !!account.refresh_token);
+    console.log('[Sync] Found account:', account.gmail_email, 'refresh_token exists:', !!account.refresh_token);
 
     // Create OAuth2 client with refresh token - it will auto-refresh access token
     const { google } = require('googleapis');
@@ -203,18 +203,18 @@ router.post('/sync', async (req, res) => {
         });
         const parsed = parseMessagePayload(fullMsg.data.payload);
 
-        const [result] = await db.query(
+        const result = await db.query(
           `INSERT INTO emails (user_id, gmail_message_id, gmail_thread_id, sender_email, sender_name, subject, snippet, body, received_at, is_processed)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             userId,
             fullMsg.id,
             fullMsg.threadId,
-            parsed.from,
+            parsed.from ?? '',
             '',
-            parsed.subject,
-            parsed.snippet,
-            parsed.body,
+            parsed.subject ?? '',
+            parsed.snippet ?? '',
+            parsed.body ?? '',
             new Date(parseInt(fullMsg.internalDate)),
             false
           ]
