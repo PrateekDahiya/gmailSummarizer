@@ -58,3 +58,11 @@ export const dashboard = {
     container.innerHTML = html;
   }
 };
+
+// Auto-init on dashboard page
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.location.pathname.includes('dashboard')) {
+    console.log('[Dashboard] DOMContentLoaded, initializing...');
+    dashboard.init();
+  }
+});
