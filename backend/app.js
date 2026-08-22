@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 const db = require('./src/config/database');
 const jwt = require('jsonwebtoken');
 
@@ -187,6 +188,9 @@ runMigrations().catch(err => {
 
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '../frontend')));
+
+// Parse cookies
+app.use(cookieParser());
 
 // Explicit routes for HTML pages
 app.get('/', (req, res) => {
