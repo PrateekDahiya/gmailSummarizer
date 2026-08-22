@@ -57,7 +57,10 @@ authController.googleCallback = async (req, res) => {
     res.redirect('/dashboard');
   } catch (error) {
     console.error('OAuth callback error:', error);
-    res.status(500).json({ error: 'Authentication failed' });
+    console.error('Error stack:', error.stack);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    res.status(500).json({ error: 'Authentication failed', details: error.message, code: error.code });
   }
 };
 
