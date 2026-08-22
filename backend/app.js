@@ -162,7 +162,7 @@ async function runMigrations() {
     if (!executed.has(migration.name)) {
       console.log(`Running migration: ${migration.name}`);
       await db.query(migration.query);
-      await db.query('INSERT INTO migrations (name) VALUES (?)', [migration.name]);
+      await db.query('INSERT IGNORE INTO migrations (name) VALUES (?)', [migration.name]);
       console.log(`Completed migration: ${migration.name}`);
     } else {
       console.log(`Skipping migration (already executed): ${migration.name}`);
