@@ -1,8 +1,61 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const gmailService = require('../services/gmailService');
 const emailProcessor = require('../services/emailProcessor');
+const { google } = require('googleapis');
+
+// Helper function to parse Gmail message payload
+function parseMessagePayload(payload) {
+  const headers = {};
+  if (payload.headers) {
+    payload.headers.forEach(h => {
+      headers[h.name.toLowerCase()] = h.value;
+    });
+  }
+
+  let body = '';
+  let snippet = payload.snippet || '';
+
+  const getBody = (part) => {
+    if (part.body && part.body.data) {
+      return Buffer.from(part.body.data, 'base64').toString('utf-8');
+    }
+    if (part.parts) {
+      for (const p of part.parts) {
+        const content = getBody(p);
+        if (content) return content;
+      }
+    }
+    return '';
+  };
+
+  body = getBody(payload);
+
+  return {
+    headers,
+    body: body || snippet,
+    snippet,
+    subject: headers.subject || '',
+    from: headers.from || '',
+    to: headers.to || '',
+    date: headers.date || '',
+    messageId: headers['message-id'] || ''
+  };
+}
+
+function extractKeyInfo(email) {
+  const { headers, body, snippet, subject, from, to, date } = email;
+  
+  return {
+    subject: subject || headers.subject || '',
+    from: from || headers.from || '',
+    to: to || headers.to || '',
+    date: date || headers.date || '',
+    snippet: snippet || (body ? body.substring(0, 200) : ''),
+    body: body || '',
+    messageId: headers['message-id'] || headers['message_id'] || ''
+  };
+}
 
 router.get('/', async (req, res) => {
   try {
@@ -106,35 +159,48 @@ router.post('/sync', async (req, res) => {
     }
 
     const account = accounts[0];
-    const tokens = {
-      access_token: account.refresh_token,
+
+    // Create OAuth2 client with refresh token - it will auto-refresh access token
+    const { google } = require('googleapis');
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+
+    // Set credentials with refresh token - library will auto-refresh access token
+    oauth2Client.setCredentials({
       refresh_token: account.refresh_token,
-      scope: 'https://www.googleapis.com/auth/gmail.readonly',
-      token_type: 'Bearer'
-    };
-
-    const gmail = require('../services/gmailService');
-    const gmailServiceInstance = new gmail(tokens);
-
-    let messages = await gmailServiceInstance.fetchMessages(userId, {
-      maxResults: 100,
-      query: 'is:unread OR is:important'
+      scope: 'https://www.googleapis.com/auth/gmail.readonly'
     });
+
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+    let messages = await gmail.users.messages.list({
+      userId: 'me',
+      maxResults: 100,
+      q: 'is:unread OR is:important'
+    });
+    messages = messages.data.messages || [];
 
     let processed = 0;
     let errors = 0;
 
     for (const msg of messages) {
       try {
-        const [existing] = await db.query(
+        const existing = await db.query(
           'SELECT id FROM emails WHERE gmail_message_id = ? AND user_id = ?',
           [msg.id, userId]
         );
 
         if (existing.length > 0) continue;
 
-        const fullMsg = await gmailServiceInstance.fetchMessageDetails(msg.id);
-        const parsed = gmailServiceInstance.parseMessagePayload(fullMsg.payload);
+        const fullMsg = await gmail.users.messages.get({
+          userId: 'me',
+          id: msg.id,
+          format: 'full'
+        });
+        const parsed = parseMessagePayload(fullMsg.data.payload);
 
         const [result] = await db.query(
           `INSERT INTO emails (user_id, gmail_message_id, gmail_thread_id, sender_email, sender_name, subject, snippet, body, received_at, is_processed)
@@ -290,7 +356,7 @@ router.post('/:id/process', async (req, res) => {
     const userId = req.user.id;
     const emailId = req.params.id;
 
-    const [emails] = await db.query(
+    const emails = await db.query(
       'SELECT * FROM emails WHERE id = ? AND user_id = ?',
       [emailId, userId]
     );
@@ -301,7 +367,7 @@ router.post('/:id/process', async (req, res) => {
 
     const email = emails[0];
 
-    const [analysis] = await db.query(
+    const analysis = await db.query(
       'SELECT * FROM email_analysis WHERE email_id = ?',
       [emailId]
     );
@@ -310,7 +376,7 @@ router.post('/:id/process', async (req, res) => {
       return res.json({ status: 'already_processed', analysis: analysis[0] });
     }
 
-    const [accounts] = await db.query(
+    const accounts = await db.query(
       'SELECT * FROM gmail_accounts WHERE user_id = ?',
       [userId]
     );
@@ -320,16 +386,27 @@ router.post('/:id/process', async (req, res) => {
     }
 
     const account = accounts[0];
-    const tokens = {
-      access_token: account.refresh_token,
-      refresh_token: account.refresh_token
-    };
 
-    const gmail = require('../services/gmailService');
-    const gmailServiceInstance = new gmail(tokens);
+    // Create OAuth2 client with refresh token
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
 
-    const msgDetails = await gmailServiceInstance.fetchMessageDetails(email.gmail_message_id);
-    const parsed = gmailServiceInstance.parseMessagePayload(msgDetails.payload);
+    oauth2Client.setCredentials({
+      refresh_token: account.refresh_token,
+      scope: 'https://www.googleapis.com/auth/gmail.readonly'
+    });
+
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+    const msgDetails = await gmail.users.messages.get({
+      userId: 'me',
+      id: email.gmail_message_id,
+      format: 'full'
+    });
+    const parsed = parseMessagePayload(msgDetails.data.payload);
 
     await db.query(
       'UPDATE emails SET body = ?, is_processed = TRUE WHERE id = ?',
