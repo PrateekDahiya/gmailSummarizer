@@ -1,3 +1,5 @@
+import { get as API_GET, post as API_POST } from './api.js';
+
 // Dashboard state and rendering
 export const dashboard = {
   urgent: [],
@@ -10,7 +12,7 @@ export const dashboard = {
   async init() {
     console.log('[Dashboard] init() called');
     // Check auth status first
-    const res = await fetch('/api/auth/me');
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
     console.log('[Dashboard] /api/auth/me status:', res.status);
     const data = await res.json();
     console.log('[Dashboard] /api/auth/me data:', data);

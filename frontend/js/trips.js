@@ -1,3 +1,5 @@
+import { get as API_GET, post as API_POST } from './api.js';
+
 // Trips state and rendering
 export const trips = {
   list: [],

@@ -1,3 +1,5 @@
+import { get as API_GET, post as API_POST } from './api.js';
+
 // Jobs state and rendering
 export const jobs = {
   list: [],
