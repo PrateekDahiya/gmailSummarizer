@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Runtime tmp
+tmp/
+
+# Build artifacts
+dist/
+build/
+
+# Coverage reports
+coverage/
+
+# Runtime state
+*.pid
+*.seed
+
+# Environment
+.env*.local
+
+# FCC
+.fcc
+
+# Binary tree
+.lock-window3
+
+# OS
+.DS_Store
