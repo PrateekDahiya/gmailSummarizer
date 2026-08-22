@@ -20,7 +20,7 @@ authController.googleCallback = async (req, res) => {
     const profile = await google.verifyIdToken(tokens.id_token);
 
     // Find or create user
-    const [rows] = await db.query(
+    const rows = await db.query(
       'SELECT * FROM users WHERE google_id = ?',
       [profile.googleId]
     );
@@ -29,7 +29,7 @@ authController.googleCallback = async (req, res) => {
     if (rows.length > 0) {
       user = rows[0];
     } else {
-      const [result] = await db.query(
+      const result = await db.query(
         `INSERT INTO users (google_id, email, name, picture_url) 
          VALUES (?, ?, ?, ?)`,
         [profile.googleId, profile.email, profile.name, profile.pictureUrl]
