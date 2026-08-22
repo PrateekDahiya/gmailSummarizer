@@ -151,6 +151,7 @@ async function runMigrations() {
   let executed = new Set();
   try {
     const [done] = await db.query('SELECT name FROM migrations');
+    console.log(`Found ${done.length} existing migrations:`, done.map(m => m.name));
     executed = new Set(done.map(m => m.name));
   } catch (err) {
     // Table might not exist yet or query failed - start with empty set
@@ -162,12 +163,16 @@ async function runMigrations() {
     if (!executed.has(migration.name)) {
       console.log(`Running migration: ${migration.name}`);
       await db.query(migration.query);
-      await db.query('INSERT IGNORE INTO migrations (name) VALUES (?)', [migration.name]);
-      console.log(`Completed migration: ${migration.name}`);
+      const [result] = await db.query('INSERT IGNORE INTO migrations (name) VALUES (?)', [migration.name]);
+      console.log(`Completed migration: ${migration.name} (affected rows: ${result.affectedRows})`);
     } else {
       console.log(`Skipping migration (already executed): ${migration.name}`);
     }
   }
+
+  // Verify final state
+  const [final] = await db.query('SELECT name FROM migrations');
+  console.log(`Total migrations recorded: ${final.length}`);
 
   console.log('All migrations completed.');
 }
