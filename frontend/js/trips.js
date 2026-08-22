@@ -6,20 +6,37 @@ export const trips = {
 
   async init() {
     console.log('[Trips] init() called');
-    const res = await fetch('/api/auth/me', { credentials: 'include' });
-    const data = await res.json();
-    if (!data.id) {
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      console.log('[Trips] /api/auth/me status:', res.status);
+      const data = await res.json();
+      console.log('[Trips] /api/auth/me data:', data);
+      if (!data.id) {
+        window.location.href = '/login.html';
+        return;
+      }
+      console.log('[Trips] Authenticated as:', data.name);
+      this.load();
+    } catch (err) {
+      console.error('[Trips] Auth check failed:', err);
       window.location.href = '/login.html';
-      return;
     }
-    console.log('[Trips] Authenticated as:', data.name);
-    this.load();
   },
 
   async load() {
-    const data = await API_GET('/api/trips');
-    this.list = data || [];
-    this.render();
+    console.log('[Trips] Loading trips...');
+    try {
+      const data = await API_GET('/api/trips');
+      console.log('[Trips] Trips data received:', data);
+      this.list = data || [];
+      this.render();
+    } catch (err) {
+      console.error('[Trips] Load error:', err);
+      const container = document.getElementById('trips-container');
+      if (container) {
+        container.innerHTML = `<div class="error">Failed to load trips: ${err.message}</div>`;
+      }
+    }
   },
 
   render() {

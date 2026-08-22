@@ -9,22 +9,39 @@ export const emails = {
 
   async init() {
     console.log('[Emails] init() called');
-    const res = await fetch('/api/auth/me', { credentials: 'include' });
-    const data = await res.json();
-    if (!data.id) {
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      console.log('[Emails] /api/auth/me status:', res.status);
+      const data = await res.json();
+      console.log('[Emails] /api/auth/me data:', data);
+      if (!data.id) {
+        window.location.href = '/login.html';
+        return;
+      }
+      console.log('[Emails] Authenticated as:', data.name);
+      this.load();
+    } catch (err) {
+      console.error('[Emails] Auth check failed:', err);
       window.location.href = '/login.html';
-      return;
     }
-    console.log('[Emails] Authenticated as:', data.name);
-    this.load();
   },
 
   async load(page = 1, filter = 'all') {
-    const data = await API_GET('/api/emails', { page, filter });
-    this.list = data.emails || [];
-    this.page = data.page || 1;
-    this.total = data.total || 0;
-    this.render();
+    console.log('[Emails] Loading emails...');
+    try {
+      const data = await API_GET('/api/emails', { page, filter });
+      console.log('[Emails] Emails data received:', data);
+      this.list = data.emails || [];
+      this.page = data.page || 1;
+      this.total = data.total || 0;
+      this.render();
+    } catch (err) {
+      console.error('[Emails] Load error:', err);
+      const container = document.getElementById('emails-list');
+      if (container) {
+        container.innerHTML = `<div class="error">Failed to load emails: ${err.message}</div>`;
+      }
+    }
   },
 
   render() {

@@ -12,34 +12,49 @@ export const dashboard = {
   async init() {
     console.log('[Dashboard] init() called');
     // Check auth status first
-    const res = await fetch('/api/auth/me', { credentials: 'include' });
-    console.log('[Dashboard] /api/auth/me status:', res.status);
-    const data = await res.json();
-    console.log('[Dashboard] /api/auth/me data:', data);
-    if (!data.id) {
-      console.log('[Dashboard] Not authenticated, redirecting to login');
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      console.log('[Dashboard] /api/auth/me status:', res.status);
+      const data = await res.json();
+      console.log('[Dashboard] /api/auth/me data:', data);
+      if (!data.id) {
+        console.log('[Dashboard] Not authenticated, redirecting to login');
+        window.location.href = '/login.html';
+        return;
+      }
+      
+      console.log('[Dashboard] Authenticated as:', data.name);
+      // Update header with user name
+      const userNameEl = document.querySelector('.user-name');
+      if (userNameEl) userNameEl.textContent = data.name || 'User';
+      
+      this.load();
+    } catch (err) {
+      console.error('[Dashboard] Auth check failed:', err);
       window.location.href = '/login.html';
-      return;
     }
-    
-    console.log('[Dashboard] Authenticated as:', data.name);
-    // Update header with user name
-    const userNameEl = document.querySelector('.user-name');
-    if (userNameEl) userNameEl.textContent = data.name || 'User';
-    
-    this.load();
   },
 
   async load() {
-    // Load dashboard data from API
-    const data = await API_GET('/api/dashboard/today');
-    this.urgent = data.urgent || [];
-    this.upcoming = data.upcoming || [];
-    this.jobs = data.jobs || [];
-    this.trips = data.trips || [];
-    this.tasks = data.tasks || [];
-    this.importantEmails = data.importantEmails || [];
-    this.render();
+    console.log('[Dashboard] Loading dashboard data...');
+    try {
+      const data = await API_GET('/api/dashboard/today');
+      console.log('[Dashboard] Dashboard data received:', data);
+      this.urgent = data.urgent || [];
+      this.upcoming = data.upcoming || [];
+      this.jobs = data.jobs || [];
+      this.trips = data.trips || [];
+      this.tasks = data.tasks || [];
+      this.importantEmails = data.importantEmails || [];
+      console.log('[Dashboard] Data loaded, rendering...');
+      this.render();
+    } catch (err) {
+      console.error('[Dashboard] Load error:', err);
+      const container = document.getElementById('dashboard-container');
+      if (container) {
+        container.innerHTML = `<div class="error">Failed to load dashboard: ${err.message}</div>`;
+      }
+    }
   },
 
   render() {

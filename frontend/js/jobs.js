@@ -6,21 +6,37 @@ export const jobs = {
 
   async init() {
     console.log('[Jobs] init() called');
-    // Check auth status first
-    const res = await fetch('/api/auth/me', { credentials: 'include' });
-    const data = await res.json();
-    if (!data.id) {
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      console.log('[Jobs] /api/auth/me status:', res.status);
+      const data = await res.json();
+      console.log('[Jobs] /api/auth/me data:', data);
+      if (!data.id) {
+        window.location.href = '/login.html';
+        return;
+      }
+      console.log('[Jobs] Authenticated as:', data.name);
+      this.load();
+    } catch (err) {
+      console.error('[Jobs] Auth check failed:', err);
       window.location.href = '/login.html';
-      return;
     }
-    console.log('[Jobs] Authenticated as:', data.name);
-    this.load();
   },
 
   async load() {
-    const data = await API_GET('/api/jobs');
-    this.list = data || [];
-    this.render();
+    console.log('[Jobs] Loading jobs...');
+    try {
+      const data = await API_GET('/api/jobs');
+      console.log('[Jobs] Jobs data received:', data);
+      this.list = data || [];
+      this.render();
+    } catch (err) {
+      console.error('[Jobs] Load error:', err);
+      const container = document.getElementById('jobs-container');
+      if (container) {
+        container.innerHTML = `<div class="error">Failed to load jobs: ${err.message}</div>`;
+      }
+    }
   },
 
   render() {
