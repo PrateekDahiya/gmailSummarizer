@@ -17,6 +17,12 @@
       <button class="btn-continue" onclick="loginWithGoogle()">Continue with Google</button>
     </div>
   </div>
+  <script>
+    console.log('[Login] Inline script running, path:', window.location.pathname);
+    window.addEventListener('DOMContentLoaded', () => {
+      console.log('[Login] DOMContentLoaded fired');
+    });
+  </script>
   <script type="module" src="/js/auth.js"></script>
   <script type="module" src="/js/api.js"></script>
 </body>
