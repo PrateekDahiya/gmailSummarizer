@@ -79,3 +79,11 @@ export const settings = {
     }
   }
 };
+
+// Auto-init on settings page
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.location.pathname.includes('settings')) {
+    console.log('[Settings] DOMContentLoaded, initializing...');
+    settings.init();
+  }
+});
