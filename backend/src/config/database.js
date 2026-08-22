@@ -1,7 +1,6 @@
 const mysql = require('mysql2/promise');
 
 let pool;
-let migrationFailed = false;
 
 async function initializePool() {
   const username = process.env.DB_USERNAME;
@@ -9,7 +8,6 @@ async function initializePool() {
 
   if (!username || !password) {
     console.warn('WARNING: DB_USERNAME and DB_PASSWORD not set - migrations will be skipped');
-    migrationFailed = true;
     return;
   }
 
@@ -19,21 +17,18 @@ async function initializePool() {
       port: parseInt(process.env.DB_PORT) || 3306,
       database: process.env.DB_NAME || 'emailSummarizer',
       user: username,
-      password: password,
-      ssl: process.env.DB_SSL === 'true'
+      password: password
     });
 
     await pool.execute('SELECT 1');
     console.log('Database pool initialized successfully');
   } catch (err) {
     console.warn('Database connection failed, migrations skipped:', err.message);
-    migrationFailed = true;
   }
 }
 
 initializePool().catch(err => {
   console.error('Database initialization error:', err.message);
-  migrationFailed = true;
 });
 
 const db = {
@@ -42,7 +37,6 @@ const db = {
   database: process.env.DB_NAME || 'emailSummarizer',
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
-  ssl: process.env.DB_SSL === 'true',
   query: async (sql, params = []) => {
     if (!pool) throw new Error('Database pool not initialized');
     const [results] = await pool.execute(sql, params);
