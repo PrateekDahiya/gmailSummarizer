@@ -11,7 +11,7 @@ router.get('/today', async (req, res) => {
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
 
-    const [urgent] = await db.query(
+    const urgent = await db.query(
       `SELECT e.id, e.subject, e.sender_email, e.received_at, ea.summary, ea.importance_score, ea.action_text
        FROM emails e
        JOIN email_analysis ea ON e.id = ea.email_id
@@ -21,7 +21,7 @@ router.get('/today', async (req, res) => {
       [userId]
     );
 
-    const [upcoming] = await db.query(
+    const upcoming = await db.query(
       `SELECT e.id, e.subject, e.received_at, ea.event_date, ea.summary, ea.category
        FROM emails e
        JOIN email_analysis ea ON e.id = ea.email_id
@@ -31,7 +31,7 @@ router.get('/today', async (req, res) => {
       [userId, today.toISOString().split('T')[0]]
     );
 
-    const [jobs] = await db.query(
+    const jobs = await db.query(
       `SELECT id, company, role, status, interview_date
        FROM jobs
        WHERE user_id = ? AND status IN ('INTERVIEW', 'ASSESSMENT', 'SHORTLISTED', 'APPLIED')
@@ -40,7 +40,7 @@ router.get('/today', async (req, res) => {
       [userId]
     );
 
-    const [trips] = await db.query(
+    const trips = await db.query(
       `SELECT id, title, destination, start_date, end_date
        FROM trips
        WHERE user_id = ? AND start_date >= ?
@@ -49,7 +49,7 @@ router.get('/today', async (req, res) => {
       [userId, today.toISOString().split('T')[0]]
     );
 
-    const [tasks] = await db.query(
+    const tasks = await db.query(
       `SELECT id, title, description, due_date, priority, completed
        FROM tasks
        WHERE user_id = ? AND completed = FALSE AND due_date >= ?
@@ -58,7 +58,7 @@ router.get('/today', async (req, res) => {
       [userId, today.toISOString().split('T')[0]]
     );
 
-    const [importantEmails] = await db.query(
+    const importantEmails = await db.query(
       `SELECT e.id, e.subject, e.sender_email, e.received_at, ea.summary, ea.importance_score, ea.category
        FROM emails e
        JOIN email_analysis ea ON e.id = ea.email_id
