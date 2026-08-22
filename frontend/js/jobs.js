@@ -2,6 +2,19 @@
 export const jobs = {
   list: [],
 
+  async init() {
+    console.log('[Jobs] init() called');
+    // Check auth status first
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
+    const data = await res.json();
+    if (!data.id) {
+      window.location.href = '/login.html';
+      return;
+    }
+    console.log('[Jobs] Authenticated as:', data.name);
+    this.load();
+  },
+
   async load() {
     const data = await API_GET('/api/jobs');
     this.list = data || [];
@@ -25,3 +38,11 @@ export const jobs = {
     container.innerHTML = html;
   }
 };
+
+// Auto-init on jobs page
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.location.pathname.includes('jobs')) {
+    console.log('[Jobs] DOMContentLoaded, initializing...');
+    jobs.init();
+  }
+});

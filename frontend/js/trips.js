@@ -2,6 +2,18 @@
 export const trips = {
   list: [],
 
+  async init() {
+    console.log('[Trips] init() called');
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
+    const data = await res.json();
+    if (!data.id) {
+      window.location.href = '/login.html';
+      return;
+    }
+    console.log('[Trips] Authenticated as:', data.name);
+    this.load();
+  },
+
   async load() {
     const data = await API_GET('/api/trips');
     this.list = data || [];
@@ -25,3 +37,11 @@ export const trips = {
     container.innerHTML = html;
   }
 };
+
+// Auto-init on trips page
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.location.pathname.includes('trips')) {
+    console.log('[Trips] DOMContentLoaded, initializing...');
+    trips.init();
+  }
+});

@@ -5,6 +5,18 @@ export const emails = {
   page: 1,
   limit: 20,
 
+  async init() {
+    console.log('[Emails] init() called');
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
+    const data = await res.json();
+    if (!data.id) {
+      window.location.href = '/login.html';
+      return;
+    }
+    console.log('[Emails] Authenticated as:', data.name);
+    this.load();
+  },
+
   async load(page = 1, filter = 'all') {
     const data = await API_GET('/api/emails', { page, filter });
     this.list = data.emails || [];
@@ -31,3 +43,11 @@ export const emails = {
     container.innerHTML = html;
   }
 };
+
+// Auto-init on emails page
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.location.pathname.includes('emails')) {
+    console.log('[Emails] DOMContentLoaded, initializing...');
+    emails.init();
+  }
+});
