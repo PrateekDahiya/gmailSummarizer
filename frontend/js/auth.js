@@ -13,6 +13,9 @@ export function logout() {
 
 // Initialize auth on page load
 document.addEventListener('DOMContentLoaded', async () => {
+  // Only run on login page
+  if (!window.location.pathname.includes('login.html')) return;
+  
   // Check if already logged in
   const res = await fetch('/api/auth/me');
   const data = await res.json();

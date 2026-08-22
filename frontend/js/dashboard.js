@@ -7,6 +7,22 @@ export const dashboard = {
   tasks: [],
   importantEmails: [],
 
+  async init() {
+    // Check auth status first
+    const res = await fetch('/api/auth/me');
+    const data = await res.json();
+    if (!data.id) {
+      window.location.href = '/login.html';
+      return;
+    }
+    
+    // Update header with user name
+    const userNameEl = document.querySelector('.user-name');
+    if (userNameEl) userNameEl.textContent = data.name || 'User';
+    
+    this.load();
+  },
+
   async load() {
     // Load dashboard data from API
     const data = await API_GET('/api/dashboard/today');
