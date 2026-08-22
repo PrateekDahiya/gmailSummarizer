@@ -50,7 +50,7 @@ authController.googleCallback = async (req, res) => {
        VALUES (?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE 
        refresh_token = VALUES(refresh_token), history_id = VALUES(history_id), last_synced_at = CURRENT_TIMESTAMP`,
-      [user.id, profile.email, tokens.refresh_token, tokens.history_id || '']
+      [user.id, profile.email, tokens.refresh_token, tokens.history_id ?? null]
     );
 
     res.cookie('token', jwtToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 7 * 24 * 60 * 60 * 1000 });
