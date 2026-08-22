@@ -17,7 +17,7 @@ module.exports = {
         'https://www.googleapis.com/auth/userinfo.email',
         'https://www.googleapis.com/auth/userinfo.profile'
       ],
-      prompt: 'select_account'
+      prompt: 'consent'
     });
     return url;
   },
