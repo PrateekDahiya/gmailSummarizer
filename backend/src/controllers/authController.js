@@ -63,7 +63,12 @@ authController.googleCallback = async (req, res) => {
       [userId, userEmail, refreshToken, historyId]
     );
 
-    res.cookie('token', jwtToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('token', jwtToken, { 
+    httpOnly: true, 
+    secure: process.env.NODE_ENV === 'production', 
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000 
+  });
     res.redirect('/dashboard');
   } catch (error) {
     console.error('OAuth callback error:', error);
