@@ -29,12 +29,17 @@ authController.googleCallback = async (req, res) => {
     if (rows.length > 0) {
       user = rows[0];
     } else {
+      const googleId = profile.googleId ?? null;
+      const email = profile.email ?? null;
+      const name = profile.name ?? null;
+      const pictureUrl = profile.pictureUrl ?? null;
+      
       const result = await db.query(
         `INSERT INTO users (google_id, email, name, picture_url) 
          VALUES (?, ?, ?, ?)`,
-        [profile.googleId, profile.email, profile.name, profile.pictureUrl]
+        [googleId, email, name, pictureUrl]
       );
-      user = { id: result.insertId, google_id: profile.googleId, email: profile.email, name: profile.name, picture_url: profile.pictureUrl };
+      user = { id: result.insertId, google_id: googleId, email, name, picture_url: pictureUrl };
     }
 
     // Create JWT
@@ -45,12 +50,17 @@ authController.googleCallback = async (req, res) => {
     );
 
     // Store Gmail account
+    const refreshToken = tokens.refresh_token ?? null;
+    const historyId = tokens.history_id ?? null;
+    const userEmail = profile.email ?? null;
+    const userId = user.id ?? null;
+    
     await db.query(
       `INSERT INTO gmail_accounts (user_id, gmail_email, refresh_token, history_id) 
        VALUES (?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE 
        refresh_token = VALUES(refresh_token), history_id = VALUES(history_id), last_synced_at = CURRENT_TIMESTAMP`,
-      [user.id, profile.email, tokens.refresh_token, tokens.history_id ?? null]
+      [userId, userEmail, refreshToken, historyId]
     );
 
     res.cookie('token', jwtToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 7 * 24 * 60 * 60 * 1000 });
