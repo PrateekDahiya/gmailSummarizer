@@ -8,14 +8,19 @@ export const dashboard = {
   importantEmails: [],
 
   async init() {
+    console.log('[Dashboard] init() called');
     // Check auth status first
     const res = await fetch('/api/auth/me');
+    console.log('[Dashboard] /api/auth/me status:', res.status);
     const data = await res.json();
+    console.log('[Dashboard] /api/auth/me data:', data);
     if (!data.id) {
+      console.log('[Dashboard] Not authenticated, redirecting to login');
       window.location.href = '/login.html';
       return;
     }
     
+    console.log('[Dashboard] Authenticated as:', data.name);
     // Update header with user name
     const userNameEl = document.querySelector('.user-name');
     if (userNameEl) userNameEl.textContent = data.name || 'User';
