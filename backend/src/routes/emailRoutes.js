@@ -149,7 +149,7 @@ router.post('/sync', async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const [accounts] = await db.query(
+    const accounts = await db.query(
       'SELECT * FROM gmail_accounts WHERE user_id = ?',
       [userId]
     );
@@ -159,6 +159,7 @@ router.post('/sync', async (req, res) => {
     }
 
     const account = accounts[0];
+    console.log('[Sync] Found account:', account.email, 'refresh_token exists:', !!account.refresh_token);
 
     // Create OAuth2 client with refresh token - it will auto-refresh access token
     const { google } = require('googleapis');
@@ -276,7 +277,14 @@ router.post('/sync', async (req, res) => {
     });
   } catch (error) {
     console.error('Error syncing emails:', error);
-    res.status(500).json({ error: 'Failed to sync emails' });
+    console.error('Error stack:', error.stack);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    res.status(500).json({ 
+      error: 'Failed to sync emails', 
+      details: error.message,
+      code: error.code
+    });
   }
 });
 
