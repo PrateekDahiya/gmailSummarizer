@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Updates - Gmail Intelligence</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/jobs.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-left">
+        <span class="logo">Gmail Intelligence</span>
+      </div>
+      <div class="header-right">
+        <span class="user-name" id="userName">Loading...</span>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="page-header">
+        <h1>Job Updates</h1>
+        <p>Track your job applications and interviews</p>
+      </div>
+
+      <div class="jobs-grid" id="jobsGrid">
+        <div class="loading-state">
+          <p>Loading jobs...</p>
+        </div>
+      </div>
+
+      <div id="noJobsState" class="no-jobs-state" style="display: none;">
+        <p>No jobs found. Sync your Gmail to detect job opportunities.</p>
+      </div>
+    </main>
+    <footer class="app-footer">
+      <div class="bottom-nav">
+        <a href="/dashboard.html" class="bottom-nav-item active">
+          <span>Home</span>
+        </a>
+        <a href="/jobs.html" class="bottom-nav-item">
+          <span>Jobs</span>
+        </a>
+        <a href="/trips.html" class="bottom-nav-item">
+          <span>Trips</span>
+        </a>
+        <a href="/emails.html" class="bottom-nav-item">
+          <span>Emails</span>
+        </a>
+        <a href="/settings.html" class="bottom-nav-item">
+          <span>Settings</span>
+        </a>
+      </div>
+    </footer>
+  </div>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/api.js"></script>
+  <script type="module" src="/js/jobs.js"></script>
+</body>
+</html>

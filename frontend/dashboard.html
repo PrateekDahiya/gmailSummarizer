@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gmail Intelligence Dashboard</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-left">
+        <span class="logo">Gmail Intelligence</span>
+      </div>
+      <div class="header-right">
+        <span class="user-name">Prateek</span>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="dashboard-grid">
+        <div class="card card-urgent">
+          <h3>Needs Attention</h3>
+          <div class="card-content" id="urgentItems">
+            <p>Loading...</p>
+          </div>
+        </div>
+
+        <div class="card card-upcoming">
+          <h3>Upcoming</h3>
+          <div class="card-content" id="upcomingItems">
+            <p>Loading...</p>
+          </div>
+        </div>
+
+        <div class="card card-jobs">
+          <h3>Job Updates</h3>
+          <div class="card-content" id="jobItems">
+            <p>Loading...</p>
+          </div>
+        </div>
+
+        <div class="card card-trips">
+          <h3>Travel</h3>
+          <div class="card-content" id="tripItems">
+            <p>Loading...</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="bottom-nav">
+        <a href="/dashboard.html" class="bottom-nav-item active">
+          <span>Home</span>
+        </a>
+        <a href="/jobs.html" class="bottom-nav-item">
+          <span>Jobs</span>
+        </a>
+        <a href="/trips.html" class="bottom-nav-item">
+          <span>Trips</span>
+        </a>
+        <a href="/emails.html" class="bottom-nav-item">
+          <span>Emails</span>
+        </a>
+        <a href="/settings.html" class="bottom-nav-item">
+          <span>Settings</span>
+        </a>
+      </div>
+    </footer>
+  </div>
+</body>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/api.js"></script>
+  <script type="module" src="/js/dashboard.js"></script>
+</body>
+</html>

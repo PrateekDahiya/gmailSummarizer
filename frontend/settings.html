@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Gmail Intelligence</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/settings.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-left">
+        <span class="logo">Gmail Intelligence</span>
+      </div>
+      <div class="header-right">
+        <span class="user-name" id="userName">Loading...</span>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="settings-page">
+        <div class="setting-section">
+          <h2>Connected Gmail</h2>
+          <div class="setting-item">
+            <span>Email:</span>
+            <span id="connectedEmail">Loading...</span>
+          </div>
+          <div class="setting-item">
+            <span>Last synced:</span>
+            <span id="lastSynced">Never</span>
+          </div>
+          <div class="setting-item">
+            <span>Processing status:</span>
+            <span id="processingStatus">Idle</span>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="syncBtn" style="width: 100%; margin: 20px 0;">
+          Sync Gmail
+        </button>
+
+        <div class="setting-section" style="margin-top: 40px;">
+          <h2>Privacy & Data</h2>
+          <div class="setting-item">
+            <p>We use read-only Gmail access to analyze your emails. No emails are sent or stored outside of your account.</p>
+          </div>
+          <button class="btn-danger" id="deleteDataBtn" style="width: 100%; margin: 10px 0; background: #ea4335;">
+            Delete my data
+          </button>
+          <button class="btn-outline" id="disconnectBtn" style="width: 100%; background: white; color: #5f6368; border: 1px solid #ddd;">
+            Disconnect Gmail
+          </button>
+        </div>
+
+        <button class="btn-outline" style="width: 100%; margin: 20px 0; justify-content: flex-start;">
+          Logout
+        </button>
+      </div>
+    </main>
+    <footer class="app-footer">
+      <div class="bottom-nav">
+        <a href="/dashboard.html" class="bottom-nav-item active">
+          <span>Home</span>
+        </a>
+        <a href="/jobs.html" class="bottom-nav-item">
+          <span>Jobs</span>
+        </a>
+        <a href="/trips.html" class="bottom-nav-item">
+          <span>Trips</span>
+        </a>
+        <a href="/emails.html" class="bottom-nav-item">
+          <span>Emails</span>
+        </a>
+        <a href="/settings.html" class="bottom-nav-item">
+          <span>Settings</span>
+        </a>
+      </div>
+    </footer>
+  </div>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/api.js"></script>
+  <script type="module" src="/js/settings.js"></script>
+</body>
+</html>

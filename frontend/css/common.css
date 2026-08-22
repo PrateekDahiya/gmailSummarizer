@@ -1,0 +1,118 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: #f0f2f5;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.app-header {
+  background: white;
+  border-radius: 12px;
+  padding: 20px 30px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.header-left .logo {
+  color: #1a73e8;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.header-right .user-name {
+  color: #5f6368;
+  font-size: 14px;
+}
+
+.app-main .dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.card h3 {
+  color: #5f6368;
+  font-size: 14px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.card-content {
+  color: #202124;
+  font-size: 16px;
+}
+
+/* Urgent card styling */
+.card-urgent .card-content {
+  color: #e82222;
+}
+
+/* Upcoming card styling */
+.card-upcoming .card-content {
+  color: #34a853;
+}
+
+/* Jobs card styling */
+.card-jobs .card-content {
+  color: #fbbc05;
+}
+
+/* Trips card styling */
+.card-trips .card-content {
+  color: #8e44ad;
+}
+
+/* Empty state */
+.card-content p {
+  text-align: center;
+  color: #8e8e93;
+  padding: 40px 0;
+}
+
+/* Bottom navigation */
+.bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  background: white;
+  border-top: 1px solid #e0e0e0;
+  padding: 12px 0;
+  margin-top: 20px;
+}
+
+.bottom-nav-item {
+  color: #5f6368;
+  font-size: 12px;
+  text-align: center;
+  text-decoration: none;
+  flex: 1;
+  padding: 8px 0;
+}
+
+.bottom-nav-item.active {
+  color: #1a73e8;
+  border-bottom: 2px solid #1a73e8;
+}

@@ -1,0 +1,103 @@
+.jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.job-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.job-card:hover {
+  transform: translateY(-2px);
+}
+
+.job-card h3 {
+  color: #202124;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.job-card .company {
+  color: #5f6368;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.job-card .role {
+  color: #1a73e8;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.job-card .status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.status-DISCOVERED {
+  background: #e8f0fe;
+  color: #1a73e8;
+}
+
+.status-APPLIED {
+  background: #e8f5e9;
+  color: #34a853;
+}
+
+.status-SHORTLISTED {
+  background: #fff8e1;
+  color: #fbbc05;
+}
+
+.status-ASSESSMENT {
+  background: #e3f2fd;
+  color: #1a73e8;
+}
+
+.status-INTERVIEW {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.status-OFFER {
+  background: #ffe0b2;
+  color: #ff8a65;
+}
+
+.status-REJECTED {
+  background: #eceff1;
+  color: #5f6368;
+}
+
+.status-WITHDRAWN {
+  background: #e8f5e9;
+  color: #34a853;
+}
+
+.status-UNKNOWN {
+  background: #eceff1;
+  color: #5f6368;
+}
+
+.job-card .date {
+  color: #8e8e93;
+  font-size: 14px;
+}
+
+.no-jobs-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #8e8e93;
+}
