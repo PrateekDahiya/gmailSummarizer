@@ -12,9 +12,7 @@ module.exports = {
     const url = client.generateAuthUrl({
       access_type: 'offline',
       scope: [
-        'https://www.googleapis.com/auth/gmail.readonly',
-        'https://www.googleapis.com/userinfo.email',
-        'https://www.googleapis.com/userinfo.profile'
+        'https://www.googleapis.com/auth/gmail.readonly'
       ],
       prompt: 'select_account'
     });
