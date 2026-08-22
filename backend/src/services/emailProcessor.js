@@ -1,241 +1,162 @@
-const db = require('../config/database');
-const gmailService = require('./gmailService');
-const aiService = require('./aiService');
-const { cleanEmailContent } = require('./emailCleaner');
+const Groq = require('groq-sdk');
+const { cleanEmailContent, extractKeyInfo } = require('./emailCleaner');
 
-const emailProcessor = {};
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
 
-emailProcessor.processEmail = async (userId, tokens, message) => {
+const ANALYSIS_PROMPT = `You are an email intelligence assistant. Analyze the email and return a JSON object with the following structure:
+
+{
+  "category": "JOB|INTERVIEW|TRAVEL|MEETING|DEADLINE|DOCUMENT|FINANCE|PERSONAL|NEWSLETTER|PROMOTION|OTHER",
+  "importance_score": 0-100,
+  "summary": "Brief 2-3 sentence summary of the email",
+  "action_required": true/false,
+  "action_text": "What action is needed (if any)",
+  "company": "Company name if detectable",
+  "role": "Job role if job-related",
+  "event_date": "ISO date string if event/meeting/deadline",
+  "entities": {
+    "location": "Location if mentioned",
+    "deadline": "Deadline if mentioned",
+    "interview_stage": "Interview stage if applicable",
+    "amount": "Amount if financial",
+    "confirmation_number": "Booking/ticket number if travel"
+  },
+  "confidence": 0.0-1.0
+}
+
+Guidelines:
+- JOB: Job postings, applications, recruiter outreach
+- INTERVIEW: Interview invitations, scheduling, follow-ups
+- TRAVEL: Flight/hotel bookings, trip confirmations
+- MEETING: Meeting requests, calendar invites
+- DEADLINE: Due dates, submissions, renewals
+- DOCUMENT: Document requests, contracts, forms
+- FINANCE: Invoices, payments, billing
+- PERSONAL: Personal correspondence
+- NEWSLETTER: Marketing newsletters
+- PROMOTION: Sales, promotions
+- OTHER: Everything else
+
+IMPORTANCE SCORING:
+- 90-100: Interview invites, job offers, urgent deadlines, travel bookings
+- 70-89: Job applications, meeting requests, document requests
+- 50-69: Meeting confirmations, travel details, financial notices
+- 30-49: Newsletters, promotional, routine correspondence
+- 0-29: Spam, promotional, irrelevant
+
+Return ONLY valid JSON. No markdown, no explanation.`;
+
+async function analyzeEmail(emailData) {
+  const { body, snippet, subject, from, to, date } = extractKeyInfo(emailData);
+  const content = cleanEmailContent(body || snippet || '');
+  
+  const prompt = `${ANALYSIS_PROMPT}
+
+EMAIL:
+Subject: ${subject}
+From: ${from}
+To: ${to}
+Date: ${date}
+Content: ${content}`;
+
   try {
-    const msgDetails = await gmailService.fetchMessageDetails(tokens, userId, message.id);
-    const parsed = gmailService.parseMessagePayload(msgDetails.payload);
+    const completion = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.1,
+      max_tokens: 1000,
+      response_format: { type: 'json_object' }
+    });
 
-    // Check if already processed
-    const [existing] = await db.query(
-      'SELECT id FROM emails WHERE user_id = ? AND gmail_message_id = ?',
-      [userId, message.id]
-    );
-
-    if (existing.length > 0) {
-      return { status: 'skipped', reason: 'already_processed' };
-    }
-
-    // Clean email content
-    const cleanedBody = cleanEmailContent(parsed.body);
-    const cleanedSnippet = cleanEmailContent(parsed.snippet);
-
-    // Store email
-    const [result] = await db.query(
-      `INSERT INTO emails 
-       (user_id, gmail_message_id, gmail_thread_id, sender_email, sender_name, subject, snippet, body, received_at, is_processed) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE)`,
-      [userId, message.id, msgDetails.threadId, parsed.sender, '', parsed.subject, cleanedSnippet, cleanedBody, new Date()]
-    );
-
-    const emailId = result.insertId;
-
-    // Process with AI if not already processed
-    if (!msgDetails.is_processed) {
-      await emailProcessor.analyzeEmail(userId, emailId, parsed.body || parsed.snippet);
-    }
-
-    return { status: 'stored', emailId };
+    const result = JSON.parse(completion.choices[0].message.content);
+    
+    // Validate and sanitize
+    return {
+      category: result.category || 'OTHER',
+      importance_score: Math.max(0, Math.min(100, result.importance_score || 0)),
+      summary: result.summary || 'Email processed',
+      action_required: Boolean(result.action_required),
+      action_text: result.action_text || '',
+      company: result.company || '',
+      role: result.role || '',
+      event_date: result.event_date || null,
+      entities: result.entities || {},
+      confidence: Math.max(0, Math.min(1, result.confidence || 0.5))
+    };
   } catch (error) {
-    console.error('Error processing email:', error);
-    return { status: 'error', error: error.message };
+    console.error('AI analysis error:', error);
+    return getFallbackAnalysis(emailData);
   }
+}
+
+function getFallbackAnalysis(emailData) {
+  const { subject, from, body, snippet } = extractKeyInfo(emailData);
+  const text = `${subject} ${from} ${body} ${snippet}`.toLowerCase();
+  
+  let category = 'OTHER';
+  let importance = 10;
+  
+  if (text.includes('interview') || text.includes('schedule')) {
+    category = 'INTERVIEW';
+    importance = 90;
+  } else if (text.includes('job') || text.includes('position') || text.includes('recruiter')) {
+    category = 'JOB';
+    importance = 70;
+  } else if (text.includes('flight') || text.includes('hotel') || text.includes('booking')) {
+    category = 'TRAVEL';
+    importance = 80;
+  } else if (text.includes('meeting') || text.includes('calendar')) {
+    category = 'MEETING';
+    importance = 60;
+  } else if (text.includes('deadline') || text.includes('due')) {
+    category = 'DEADLINE';
+    importance = 85;
+  } else if (text.includes('document') || text.includes('contract')) {
+    category = 'DOCUMENT';
+    importance = 50;
+  } else if (text.includes('invoice') || text.includes('payment') || text.includes('bill')) {
+    category = 'FINANCE';
+    importance = 60;
+  } else if (text.includes('newsletter') || text.includes('unsubscribe')) {
+    category = 'NEWSLETTER';
+    importance = 10;
+  } else if (text.includes('sale') || text.includes('promo') || text.includes('discount')) {
+    category = 'PROMOTION';
+    importance = 10;
+  }
+
+  return {
+    category,
+    importance_score: importance,
+    summary: `Email from ${emailData.headers?.from || 'unknown'} regarding ${subject}`,
+    action_required: importance > 50,
+    action_text: importance > 50 ? 'Review email for required action' : '',
+    company: '',
+    role: '',
+    event_date: null,
+    entities: {},
+    confidence: 0.3
+  };
+}
+
+async function processEmailBatch(emails) {
+  const results = [];
+  for (const email of emails) {
+    try {
+      const analysis = await analyzeEmail(email);
+      results.push({ email, analysis });
+    } catch (error) {
+      console.error('Batch process error:', error);
+      results.push({ email, analysis: getFallbackAnalysis(email) });
+    }
+  }
+  return results;
+}
+
+module.exports = {
+  analyzeEmail,
+  processEmailBatch,
+  cleanEmailContent,
+  extractKeyInfo
 };
-
-emailProcessor.analyzeEmail = async (userId, emailId, content) => {
-  try {
-    const aiResult = await aiService.extractEntities(content);
-
-    // Validate AI response
-    if (!aiResult || !aiResult.category) {
-      throw new Error('Invalid AI response');
-    }
-
-    // Determine importance score using deterministic rules
-    const importanceScore = emailProcessor.calculateImportance(aiResult.category, aiResult.summary);
-
-    // Store analysis
-    await db.query(
-      `INSERT INTO email_analysis 
-       (email_id, category, importance_score, summary, action_required, action_text, company, role, event_date, confidence) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        emailId,
-        aiResult.category,
-        importanceScore,
-        aiResult.summary,
-        aiResult.action_required,
-        aiResult.action_text,
-        aiResult.company,
-        aiResult.role,
-        aiResult.event_date,
-        aiResult.confidence
-      ]
-    );
-
-    // Create job record if category is JOB
-    if (aiResult.category === 'JOB') {
-      await emailProcessor.createJobRecord(userId, emailId, aiResult);
-    }
-
-    // Create task if action required
-    if (aiResult.action_required) {
-      await emailProcessor.createTask(userId, emailId, aiResult);
-    }
-
-    // Create trip if category is TRAVEL
-    if (aiResult.category === 'TRAVEL') {
-      await emailProcessor.createTrip(userId, emailId, aiResult);
-    }
-
-    return { status: 'analyzed', ...aiResult };
-  } catch (error) {
-    console.error('Error analyzing email:', error);
-    throw error;
-  }
-};
-
-emailProcessor.calculateImportance = (category, summary) => {
-  const highPriorityPatterns = [
-    'Interview invitation',
-    'Job opportunity',
-    'Deadline',
-    'Flight confirmation',
-    'Payment failure'
-  ];
-
-  const mediumPriorityPatterns = [
-    'Meeting',
-    'Document request'
-  ];
-
-  const lowPriorityPatterns = [
-    'Newsletter',
-    'Marketing',
-    'Promotional email'
-  ];
-
-  let score = 50; // default medium
-
-  const lowerSummary = summary.toLowerCase();
-
-  // Check deterministic rules first
-  for (const pattern of highPriorityPatterns) {
-    if (lowerSummary.includes(pattern.toLowerCase())) {
-      return 90;
-    }
-  }
-
-  for (const pattern of mediumPriorityPatterns) {
-    if (lowerSummary.includes(pattern.toLowerCase())) {
-      return 70;
-    }
-  }
-
-  for (const pattern of lowPriorityPatterns) {
-    if (lowerSummary.includes(pattern.toLowerCase())) {
-      return 30;
-    }
-  }
-
-  // AI category based
-  if (category === 'JOB' || category === 'INTERVIEW') {
-    return 85;
-  }
-
-  if (category === 'TRAVEL') {
-    return 80;
-  }
-
-  if (category === 'MEETING') {
-    return 65;
-  }
-
-  return 40;
-};
-
-emailProcessor.createJobRecord = async (userId, emailId, aiResult) => {
-  const [existing] = await db.query(
-    'SELECT id FROM jobs WHERE user_id = ? AND company = ?',
-    [userId, aiResult.company]
-  );
-
-  if (existing.length > 0) {
-    return;
-  }
-
-  await db.query(
-    `INSERT INTO jobs (user_id, company, role, status, source_email_id) 
-     VALUES (?, ?, ?, ?, ?)`,
-    [userId, aiResult.company, aiResult.role || 'Unknown', 'DISCOVERED', emailId]
-  );
-};
-
-emailProcessor.createTask = async (userId, emailId, aiResult) => {
-  const [existing] = await db.query(
-    'SELECT id FROM tasks WHERE user_id = ? AND title = ?',
-    [userId, aiResult.action_text || '']
-  );
-
-  if (existing.length > 0) {
-    return;
-  }
-
-  let dueDate = null;
-  if (aiResult.event_date) {
-    dueDate = new Date(aiResult.event_date);
-  }
-
-  await db.query(
-    `INSERT INTO tasks (user_id, title, description, due_date, priority, source_email_id) 
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [
-      userId,
-      aiResult.action_text || 'Action required',
-      aiResult.summary || '',
-      dueDate,
-      aiResult.priority || 'MEDIUM',
-      emailId
-    ]
-  );
-};
-
-emailProcessor.createTrip = async (userId, emailId, aiResult) => {
-  // Check if a trip with this destination already exists
-  const [existingTrips] = await db.query(
-    'SELECT * FROM trips WHERE user_id = ? AND destination = ?',
-    [userId, aiResult.entities?.location]
-  );
-
-  if (existingTrips.length > 0) {
-    // Update the existing trip's dates if needed
-    const startDate = new Date(aiResult.event_date);
-    const endDate = startDate;
-    await db.query(
-      'UPDATE trips SET start_date = ?, end_date = ? WHERE id = ?',
-      [startDate, endDate, existingTrips[0].id]
-    );
-    return;
-  }
-
-  // Create new trip
-  let startDate = null;
-  let endDate = null;
-  if (aiResult.event_date) {
-    const date = new Date(aiResult.event_date);
-    startDate = date;
-    endDate = date;
-  }
-
-  await db.query(
-    `INSERT INTO trips (user_id, title, destination, start_date, end_date) 
-     VALUES (?, ?, ?, ?, ?)`,
-    [userId, aiResult.summary || 'Trip', aiResult.entities?.location || 'Unknown', startDate, endDate]
-  );
-};
-
-module.exports = emailProcessor;

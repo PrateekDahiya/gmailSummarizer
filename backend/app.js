@@ -302,8 +302,16 @@ const jobRoutes = require('./src/routes/jobRoutes');
 app.use('/api/jobs', jobRoutes);
 
 // Trips routes
-const tripRoutes = require('./src/routes/TripRoutes');
+const tripRoutes = require('./src/routes/tripRoutes');
 app.use('/api/trips', tripRoutes);
+
+// Tasks routes
+const taskRoutes = require('./src/routes/taskRoutes');
+app.use('/api/tasks', taskRoutes);
+
+// Events routes
+const eventRoutes = require('./src/routes/eventRoutes');
+app.use('/api/events', eventRoutes);
 
 // Catch-all 404
 app.use((req, res) => {
