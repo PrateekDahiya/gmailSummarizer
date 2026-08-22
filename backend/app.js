@@ -188,6 +188,47 @@ runMigrations().catch(err => {
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '../frontend')));
 
+// Explicit routes for HTML pages
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/login.html'));
+});
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/login.html'));
+});
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/login.html'));
+});
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dashboard.html'));
+});
+app.get('/dashboard.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dashboard.html'));
+});
+app.get('/jobs', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/jobs.html'));
+});
+app.get('/jobs.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/jobs.html'));
+});
+app.get('/trips', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/trips.html'));
+});
+app.get('/trips.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/trips.html'));
+});
+app.get('/emails', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/emails.html'));
+});
+app.get('/emails.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/emails.html'));
+});
+app.get('/settings', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/settings.html'));
+});
+app.get('/settings.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/settings.html'));
+});
+
 // JWT middleware - attach req.user from cookie
 app.use((req, res, next) => {
   let token = null;
@@ -251,6 +292,7 @@ app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     res.status(404).json({ error: 'Not found' });
   } else {
+    // Fallback to login page for unknown routes
     res.sendFile(path.join(__dirname, '../frontend/login.html'));
   }
 });
